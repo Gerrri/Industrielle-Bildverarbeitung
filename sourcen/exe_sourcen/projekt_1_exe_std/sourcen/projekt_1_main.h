@@ -22,6 +22,7 @@ int main_hist_ausgleich (char *fct_name, char *cmd_line)
     PIC sPic_Out0,*Pic_Out0=&sPic_Out0;
 
     int schwelle, x, y;
+
     BYTE_IBV byte_schwelle;
 
     CHAR Buffer[100]="\0";
@@ -70,20 +71,78 @@ int main_hist_ausgleich (char *fct_name, char *cmd_line)
 
 
     // ########## Ab hier den eigenen Source-Code einfügen
+    int gmax = 255;
+    int pixel_anz = Pic_In0->maxrow * Pic_In0->maxcol;
+    int g_haeuf[255] = {};      // häufigkeit der Wertw
+    double nh[255] = {};        //normierte Häufigkeit
+    double hg[255] = {};        //normierte kumulative Häufigkeit
+    int fg[255] = {};        //Tranformierte Grauwerte (Ganzzahlig)
+
+
+
+
+
+
+    //Grauwert Häufigkeit in Array speichern (Grauwert = index+1)
+    for (y=0; y<Pic_In0->maxrow; y++)
+    {
+        for (x=0; x<Pic_In0->maxcol; x++)
+        {
+           g_haeuf[b_pixel(Pic_In0,x,y)] += 1 ;
+        }
+    }
+
+
+    //normierte häufigkeit berechnen und kumulative häufgikeit
+    for (y=0; y<gmax; y++){
+        nh[y] = (g_haeuf[y]* 1.0) / (pixel_anz * 1.0);
+
+        if(y == 0){
+            hg[y] = nh[y];
+        }
+        if(y > 0 && y < 255){
+          hg[y] = hg[y-1] + nh[y];
+        }
+    }
+
+    //f(g) tranformierter Grauwert
+    for (y=0; y<gmax; y++){
+        fg[y] = hg[y] * gmax;
+    }
+
+
+
+    //Schleife Output -> f(g) auf Bild Packen
+    for (y=0; y<Pic_In0->maxrow; y++)
+    {
+        for (x=0; x<Pic_In0->maxcol; x++)
+        {
+
+            b_pixel(Pic_Out0,x,y)=fg[b_pixel(Pic_In0,x,y)-1];
+
+        }
+    }
+
+
+
+
+    /*
     for (y=0; y<Pic_In0->maxrow; y++)
     {
         for (x=0; x<Pic_In0->maxcol; x++)
         {
 
             if( (b_pixel(Pic_In0,x,y)) <= byte_schwelle) {
-                b_pixel(Pic_Out0,x,y)=0;
+                b_pixel(Pic_Out0,x,y)=128;
             }
             else {
-                b_pixel(Pic_Out0,x,y)=128;
+                b_pixel(Pic_Out0,x,y)=0;
             }
 
         }
     }
+    */
+
     // ########## Bis hierhin den eigenen Source-Code einfügen
 
 
