@@ -207,6 +207,90 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
 
 
     // ########## Ab hier den eigenen Source-Code einfügen
+
+    //Hilfvaraiblen
+    double r_in,g_in,b_in;                  // RGB Werte 0-255
+    int y,x;                                // x und y Werte das Pixels
+    double r_norm, g_norm, b_norm;          // RGB auf 0 bis 1 genormt
+    double l;                       // Luminance                                        #L#
+    double lr, lg, lb;                      // Vektor L
+    double cr, cg, cb;                      // Vektor C
+    double c;                               // Chrominance                                      #C#
+    double rpr,rpg,rpb;                     // Vektor RP
+    double rp_betrag;                       // RP-Betrag
+    double cos_alpha;                       // cos (alpha)= (C * R) / (C-Betrag * R-Betrag)
+    double alpha;                           // alpha
+    double h;                               // HUE                                              #H#
+    double pi=3.14159265358979323846;        // pi
+
+
+
+
+    for (y=0; y<Pic_In0->maxrow; y++)
+    {
+        for (x=0; x<Pic_In0->maxcol; x++)
+        {
+//START RGB2HCL
+            //rgb des aktuellen Pixels auslesen
+            r_in = rgb_pixel(Pic_In0,x,y)->r;
+            g_in = rgb_pixel(Pic_In0,x,y)->g;
+            b_in = rgb_pixel(Pic_In0,x,y)->b;
+
+            //rgb Werte Normieren
+            r_norm = r_in*1.0 / 255;
+            g_norm = g_in*1.0 / 255;
+            b_norm = b_in*1.0 / 255;
+
+            //(1 + 2)Luminance Berechnen 1/sqrt(3)* (r_norm+g_norm+b_norm) + Vektor
+            l = 1/sqrt(3)*(r_norm+g_norm+b_norm);
+
+            lr = lg = lb = l / sqrt(3);
+
+
+            //(3)Berechnung Verktor C
+            cr = r_norm - lr;
+            cg = g_norm - lg;
+            cb = b_norm - lb;
+
+            //(4)Chrominance
+            c = sqrt(cr*cr+cg*cg+cb*cb);
+
+            //(5)Vektor RP = Projektion des Vektors (r=1, g=0, b=0) in die Ebene in der auch der Vektor C lieg
+            rpr =      0.66666666666666667;
+            rpg =     -0.33333333333333333;
+            rpb =     -0.33333333333333333;
+
+            //(6)RP Betrag
+            rp_betrag = sqrt(rpr*rpr + rpg*rpg + rpb*rpb);
+
+            //(7.1)cos (alpha)= (C * R) / (C-Betrag * R-Betrag)
+            cos_alpha = ((rpr*cr)+(rpg*cg)+(rpb*cb))/(c*rp_betrag);
+
+            //(7.2)alpha = arcos(cos_alpha)
+            alpha = acos(cos_alpha) / pi * 180;
+
+            //(7.3)Hue =
+            h = 360 - alpha;
+
+            int haltepunkt = 1;
+//END RGB2HCL (h,c,l)
+
+//HCL2HSI
+
+
+
+
+
+//HCL2HSI
+
+
+        }
+    }
+
+
+
+
+
     copy_all(Pic_In0,Pic_OutH);
     copy_all(Pic_In0,Pic_OutS);
     copy_all(Pic_In0,Pic_OutI);
@@ -234,6 +318,7 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
 
 
 }
+
 
 
 
