@@ -443,6 +443,13 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
     Alloc_Pic_Data(Pic_RGB);
 
     // ########## Ab hier den eigenen Source-Code einfügen
+    
+    
+     
+    
+    
+    
+    
     copy_all(Pic_I,Pic_RGB);
     // ########## Bis hierhin den eigenen Source-Code einfügen
 
