@@ -290,7 +290,12 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
             alpha = acos(cos_alpha) / pi * 180;
 
             //(7.3)Hue =
-            h = 360 - alpha;
+            if(b_in>g_in){
+                h = 360 - alpha;
+            }else{
+                h =alpha;
+            }
+
 
 //END RGB2HCL (h,c,l)
 
