@@ -1,5 +1,6 @@
 ﻿
 #include ".\std_sourcen\qt_debug_bug.h"
+#include <stdio.h>
 
 // Bei einer Erweiterung bzw. Änderung müssen die folgenden Datei
 // an den durch AENDERN bzw. ERWEITERN gekennzeichneten Stellen sinngemäß
@@ -231,7 +232,7 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
     double db,dg,dr=0;                                                    //Differenzvektor SM und L
     double cMAXer=0;
     double S =0;                                                          //Chroma auf cMAXer normiert
-    double I =0;                                                          // das I der HSI Farbraums
+    double I =0;                                                            // das I der HSI Farbraums
 
 
 
@@ -275,7 +276,15 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
             rp_betrag = sqrt(rpr*rpr + rpg*rpg + rpb*rpb);
 
             //(7.1)cos (alpha)= (C * R) / (C-Betrag * R-Betrag)
-            cos_alpha = ((rpr*cr)+(rpg*cg)+(rpb*cb))/(c*rp_betrag);
+            if((c*rp_betrag)==0.0000000000){
+                cos_alpha = 0;
+            }else{
+                cos_alpha = ((rpr*cr)+(rpg*cg)+(rpb*cb))/(c*rp_betrag);
+            }
+
+
+
+
 
             //(7.2)alpha = arcos(cos_alpha)
             alpha = acos(cos_alpha) / pi * 180;
@@ -367,6 +376,10 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
             f_pixel(Pic_OutS,x,y) = S;
             f_pixel(Pic_OutI,x,y) = I;
 
+            if (I==0){
+                int aasdasd = 5;
+            }
+
         }
     }
 
@@ -454,7 +467,12 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
     double v,u,t,a,b,c;
     int VZ_Wurzel,VZ_Lambda;
     double kg,lambda;
-    double Cr,Cg,Cb;
+    double Cr,Cg,Cb,C;
+    double Lr,Lg,Lb;
+
+    double l_BG, l_BR, l_GR, l_YM, l_YT, l_MT, l_MAX, l_MIN_positiv =0;   //Alle Lambdas
+    double db,dg,dr,smb, smg, smr, cMAXer;
+    int R,G,B;
 
 
     for (y=0; y<Pic_H->maxrow; y++)
@@ -497,7 +515,7 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
             b = (2*v*u)-(2*t*t);
             c = (u*u)-(2*t*t);
 
-            //VZ_Wurzel
+            //(2.6)VZ_Wurzel
              if(HCL_H>=0 && HCL_H<=90){                    VZ_Wurzel =  1;
                  }else if(HCL_H>90    && HCL_H<150){       VZ_Wurzel = -1;
                  }else if(HCL_H>=150  && HCL_H<=180){      VZ_Wurzel = -1;
@@ -507,7 +525,7 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
                  }else{                                  VZ_Wurzel =  0;
                  }
 
-             //VZ_Lambda
+             //(2.7)VZ_Lambda
              if(HCL_H>=0 && HCL_H<=90){                   VZ_Lambda = -1;
                 }else if(HCL_H>90    && HCL_H<150){       VZ_Lambda = -1;
                 }else if(HCL_H>=150  && HCL_H<=180){      VZ_Lambda =  1;
@@ -516,7 +534,7 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
                 }else if(HCL_H>=330  && HCL_H<360){       VZ_Lambda = -1;
                 }else{                                  VZ_Lambda =  0;
                 }
-            //kg =WENN(B151=0;-(B153/B152);(B155*WURZEL((B152*B152)-(4*B151*B153))-B152)/(2*B151)   )
+            //(2.8)kg =WENN(B151=0;-(B153/B152);(B155*WURZEL((B152*B152)-(4*B151*B153))-B152)/(2*B151)   )
 
             if(a==0){kg = c/b;}
             else{
@@ -533,7 +551,7 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
             K_Betrag = sqrt((Kr*Kr)+(Kg*Kg)+(Kb*Kb));
 
 
-            //lambda
+            //(2.9)lambda
             lambda = VZ_Lambda * HCL_C  / K_Betrag;
 
             //OUTPUT
@@ -541,10 +559,88 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
             Cg = lambda*Kg;
             Cb = lambda*Kb;
 
-            int llllll = 5;
+          //(3) Berechne auf Basis des Arbeits-HCL-Trippels und des Arbeits-Vektors C das EmaxER
+            //(3.1) L = HCL_L
+            Lr = HCL_L/sqrt(3);
+            Lg = HCL_L/sqrt(3);
+            Lb = HCL_L/sqrt(3);
+
+            //(3.2)
+            if(Cr==0){l_BG=10000;} else{l_BG = -HCL_L/(sqrt(3)*Cr);}
+            if(Cg==0){l_BR=10000;} else{l_BR = -HCL_L/(sqrt(3)*Cg);}
+            if(Cb==0){l_GR=10000;} else{l_GR = -HCL_L/(sqrt(3)*Cb);}
+
+            if(Cr==0){l_YM=10000;} else{l_YM=(1-(HCL_L/sqrt(3)))/Cr;}
+            if(Cg==0){l_YT=10000;} else{l_YT=(1-(HCL_L/sqrt(3)))/Cg;}
+            if(Cb==0){l_MT=10000;} else{l_MT=(1-(HCL_L/sqrt(3)))/Cb;}
+
+            //(3.3)
+                // l_MAX berechnen
+                l_MAX = l_BG;
+                if(l_MAX < l_BR){l_MAX=l_BR;}
+                if(l_MAX < l_GR){l_MAX=l_GR;}
+                if(l_MAX < l_YM){l_MAX=l_YM;}
+                if(l_MAX < l_YT){l_MAX=l_YT;}
+                if(l_MAX < l_MT){l_MAX=l_MT;}
+
+                // negative lambda auf l_MAX
+                if(0 > l_BG){l_BG = l_MAX;}
+                if(0 > l_BR){l_BR = l_MAX;}
+                if(0 > l_GR){l_GR = l_MAX;}
+                if(0 > l_YM){l_YM = l_MAX;}
+                if(0 > l_YT){l_YT = l_MAX;}
+                if(0 > l_MT){l_MT = l_MAX;}
+
+                // minimal positiver Lambda wert
+                l_MIN_positiv = l_BG;
+                if(l_MIN_positiv > l_BR){l_MIN_positiv=l_BR;}
+                if(l_MIN_positiv > l_GR){l_MIN_positiv=l_GR;}
+                if(l_MIN_positiv > l_YM){l_MIN_positiv=l_YM;}
+                if(l_MIN_positiv > l_YT){l_MIN_positiv=l_YT;}
+                if(l_MIN_positiv > l_MT){l_MIN_positiv=l_MT;}
 
 
- //START HSI2HCL
+            // (3.4) Schnittpunkte (SM) berechnen indem Lambda einfach in die Geradengleichung eingesetzt wird
+            // smb, smg, smr
+            smb = Lr    +   l_MIN_positiv   *   Cr;
+            smg = Lg    +   l_MIN_positiv   *   Cg;
+            smr = Lb    +   l_MIN_positiv   *   Cb;
+
+            // (3.5) Differenzvektor SM und L
+            // duble db,dg,dr,smb, smg, smr
+            db = smb - Lr;
+            dg = smg - Lg;
+            dr = smr - Lb;
+
+            // (3.6) Abstand von SM zur Unbuntgerade berechnen
+            cMAXer = sqrt((db*db)+(dg*dg)+(dr*dr));
+
+            C = cMAXer*HSI_S;
+
+            // (4) Berechne auf Basis der "richtigen" C den "richtigen" Vektor C
+            if(C==0){Cr=0;}else{Cr=Cr*C/1;}
+            if(C==0){Cg=0;}else{Cg=Cg*C/1;}
+            if(C==0){Cb=0;}else{Cb=Cb*C/1;}
+
+            //OUTPUT H,L,Cr,Cg,Cb
+
+ //ENDE HSI2HCL
+ //START HCL2RGB
+            //(3.1) L = HCL_L
+            Lr = HCL_L/sqrt(3);
+            Lg = HCL_L/sqrt(3);
+            Lb = HCL_L/sqrt(3);
+
+            //direkt von Normiert zu absolut!
+            R = (Cr+Lr)*255;
+            G = (Cg+Lg)*255;
+            B = (Cb+Lb)*255;
+
+            rgb_pixel(Pic_RGB,x,y)->r = R;
+            rgb_pixel(Pic_RGB,x,y)->g = G;
+            rgb_pixel(Pic_RGB,x,y)->b = B;
+
+ //START HCL2RGB
 
         }
     }
@@ -554,7 +650,7 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
 
 
 
-    copy_all(Pic_I,Pic_RGB);
+    //copy_all(Pic_I,Pic_RGB);
     // ########## Bis hierhin den eigenen Source-Code einfügen
 
     //Dateipfade für Ausgabebilder besorgen und Bilder abspeichern
