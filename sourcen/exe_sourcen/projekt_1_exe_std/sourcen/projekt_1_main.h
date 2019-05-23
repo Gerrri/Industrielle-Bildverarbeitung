@@ -221,7 +221,17 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
     double cos_alpha;                       // cos (alpha)= (C * R) / (C-Betrag * R-Betrag)
     double alpha;                           // alpha
     double h;                               // HUE                                              #H#
-    double pi=3.14159265358979323846;        // pi
+    double pi=3.14159265358979323846;       // pi
+
+
+    //zusätzlich für HCL2HSI
+    double l_BG, l_BR, l_GR, l_YM, l_YT, l_MT, l_MAX, l_MIN_positiv =0;   //Alle Lambdas
+    double smb, smg, smr =0;                                              //Schnittpunkte
+    double db,dg,dr=0;                                                    //Differenzvektor SM und L
+    double cMAXer=0;
+    double S =0;                                                          //Chroma auf cMAXer normiert
+    double I =0;                                                          // das I der HSI Farbraums
+
 
 
 
@@ -275,13 +285,83 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
             int haltepunkt = 1;
 //END RGB2HCL (h,c,l)
 
-//HCL2HSI
+//START HCL2HSI -> input : h, l, cr, cg, cb
+            //(1) lr,lg,lb
+            lr = lg = lb = l / sqrt(3);
+
+            //(1) EmaxER aus HLCrCgCb berechnen unter Nutzung der folgenden MAKROS
+            //START MAKRO_EmaxER_Bestimmen ##############################################################
+                        // (1.2) alle Lambdas berechnen l_BG, l_BR, l_GR, l_YM, l_YT, l_MT;
+                        if(cr == 0){l_BG = 10000;}      else{l_BG = -l /  (sqrt(3) * cr);}
+                        if(cg == 0){l_BR = 10000;}      else{l_BR = -l /  (sqrt(3) * cg);}
+                        if(cb == 0){l_GR = 10000;}      else{l_GR = -l /  (sqrt(3) * cb);}
+
+                        if(cr == 0){l_YM = 10000;}      else{l_YM = (1-(l/sqrt(3)))/cr;}
+                        if(cg == 0){l_YT = 10000;}      else{l_YT = (1-(l/sqrt(3)))/cg;}
+                        if(cb == 0){l_MT = 10000;}      else{l_MT = (1-(l/sqrt(3)))/cb;}
+
+                        // (1.3) minimales positives Lambda l_MIN_positiv Berechnen
+                            // l_MAX berechnen
+                            l_MAX = l_BG;
+                            if(l_MAX < l_BR){l_MAX=l_BR;}
+                            if(l_MAX < l_GR){l_MAX=l_GR;}
+                            if(l_MAX < l_YM){l_MAX=l_YM;}
+                            if(l_MAX < l_YT){l_MAX=l_YT;}
+                            if(l_MAX < l_MT){l_MAX=l_MT;}
+
+                            // negative lambda auf l_MAX
+                            if(0 > l_BG){l_BG = l_MAX;}
+                            if(0 > l_BR){l_BR = l_MAX;}
+                            if(0 > l_GR){l_GR = l_MAX;}
+                            if(0 > l_YM){l_YM = l_MAX;}
+                            if(0 > l_YT){l_YT = l_MAX;}
+                            if(0 > l_MT){l_MT = l_MAX;}
+
+                            // minimal positiver Lambda wert
+                            l_MIN_positiv = l_BG;
+                            if(l_MIN_positiv > l_BR){l_MIN_positiv=l_BR;}
+                            if(l_MIN_positiv > l_GR){l_MIN_positiv=l_GR;}
+                            if(l_MIN_positiv > l_YM){l_MIN_positiv=l_YM;}
+                            if(l_MIN_positiv > l_YT){l_MIN_positiv=l_YT;}
+                            if(l_MIN_positiv > l_MT){l_MIN_positiv=l_MT;}
+
+                        // (1.4) Schnittpunkte (SM) berechnen indem Lambda einfach in die Geradengleichung eingesetzt wird
+                        // smb, smg, smr
+                        smb = lr    +   l_MIN_positiv   *   cr;
+                        smg = lg    +   l_MIN_positiv   *   cg;
+                        smr = lb    +   l_MIN_positiv   *   cb;
+
+                        // (1.5) Differenzvektor SM und L
+                        // db,dg,dr
+                        db = smb - lr;
+                        dg = smg - lg;
+                        dr = smr - lb;
+
+                        // (1.6) Abstand von SM zur Unbuntgerade berechnen
+                        cMAXer = sqrt((db*db)+(dg*dg)+(dr*dr));
+            //ENDE MAKRO_EmaxER_Bestimmen ##############################################################
+
+            //(2)Das Chroma aus Cr, Cb, Cg berechnen
+            c = sqrt((cr*cr)+(cg*cg)+(cb*cb));
+
+            //(3) Das Chroma (Betrag von Vektor C) auf EmaxER normieren
+            if(cMAXer==0){S=0;}
+            else{
+                S = c/cMAXer;
+            }
+
+            //(3?) I berechnen
+            I = l/sqrt(3);
 
 
+            //Prüfung ob HSI Valide
+            if(S>1 && S<1.1){ S=1; }    // Wenn S durch RUndungsfehler nicht ok
+            if(I>1 && I<1.1){ I=1; }    // Wenn I durch RUndungsfehler nicht ok
 
+            if(S<0) {S=0;}
+            if(I<0) {I=0;}
 
-
-//HCL2HSI
+//ENDE HCL2HSI
 
 
         }
@@ -290,10 +370,9 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
 
 
 
-
-    copy_all(Pic_In0,Pic_OutH);
-    copy_all(Pic_In0,Pic_OutS);
-    copy_all(Pic_In0,Pic_OutI);
+    //copy_all(Pic_In0,Pic_OutH);
+    //copy_all(Pic_In0,Pic_OutS);
+    //copy_all(Pic_In0,Pic_OutI);
     // ########## Bis hierhin den eigenen Source-Code einfügen
 
 
