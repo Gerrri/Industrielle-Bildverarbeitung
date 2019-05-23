@@ -11,6 +11,7 @@
 // 3.) Änderung der Parameterdatei aus IBV-Studio heraus
 // 4.) Function.h
 // 5.) Function.c
+double pi=3.14159265358979323846;       // pi
 
 
 int main_hist_ausgleich (char *fct_name, char *cmd_line)
@@ -221,7 +222,7 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
     double cos_alpha;                       // cos (alpha)= (C * R) / (C-Betrag * R-Betrag)
     double alpha;                           // alpha
     double h;                               // HUE                                              #H#
-    double pi=3.14159265358979323846;       // pi
+
 
 
     //zusätzlich für HCL2HSI
@@ -443,6 +444,116 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
     Alloc_Pic_Data(Pic_RGB);
 
     // ########## Ab hier den eigenen Source-Code einfügen
+    //rgb_pixel(Pic_In0,x,y)->r;
+    int x,y;
+    double HSI_H, HSI_S, HSI_I;
+    double HCL_H, HCL_C, HCL_L;
+    double alpha;
+    double rpr,rpg,rpb,rp_betrag;
+    double Kr, Kg, Kb, K_Betrag;
+    double v,u,t,a,b,c;
+    int VZ_Wurzel,VZ_Lambda;
+    double kg,lambda;
+    double Cr,Cg,Cb;
+
+
+    for (y=0; y<Pic_H->maxrow; y++)
+    {
+        for (x=0; x<Pic_H->maxcol; x++)
+        {
+ //START HSI2HCL
+            //INPUT
+            HSI_H = f_pixel(Pic_H,x,y);
+            HSI_S = f_pixel(Pic_S,x,y);
+            HSI_I = f_pixel(Pic_I,x,y);
+
+
+            //(1) Arbeits HCL Trippel
+            HCL_H = HSI_H;
+            HCL_C = 1;
+            HCL_L = HSI_I*sqrt(3);
+
+
+            //(2) MAKRO_Vektor_C_aus_den Werten_HCL_Berechnen
+
+            //(2.1)alpha
+            alpha = HSI_H;
+
+            //(2.2)Vektor RP = Projektion des Vektors (r=1, g=0, b=0) in die Ebene in der auch der Vektor C lieg
+            rpr =      0.66666666666666667;
+            rpg =     -0.33333333333333333;
+            rpb =     -0.33333333333333333;
+
+            //(2.3)RP Betrag
+            rp_betrag = sqrt(rpr*rpr + rpg*rpg + rpb*rpb);
+
+
+            //(2.5)
+            v = rpg-rpr;
+            u = rpb-rpr;
+            t = rp_betrag*cos((alpha/180*pi));
+
+            a = (v*v)-(2*(t*t));
+            b = (2*v*u)-(2*t*t);
+            c = (u*u)-(2*t*t);
+
+            //VZ_Wurzel
+             if(HCL_H>=0 && HCL_H<=90){                    VZ_Wurzel =  1;
+                 }else if(HCL_H>90    && HCL_H<150){       VZ_Wurzel = -1;
+                 }else if(HCL_H>=150  && HCL_H<=180){      VZ_Wurzel = -1;
+                 }else if(HCL_H>180   && HCL_H<=270){      VZ_Wurzel =  1;
+                 }else if(HCL_H>270   && HCL_H<330){       VZ_Wurzel = -1;
+                 }else if(HCL_H>=330  && HCL_H<360){       VZ_Wurzel = -1;
+                 }else{                                  VZ_Wurzel =  0;
+                 }
+
+             //VZ_Lambda
+             if(HCL_H>=0 && HCL_H<=90){                   VZ_Lambda = -1;
+                }else if(HCL_H>90    && HCL_H<150){       VZ_Lambda = -1;
+                }else if(HCL_H>=150  && HCL_H<=180){      VZ_Lambda =  1;
+                }else if(HCL_H>180   && HCL_H<=270){      VZ_Lambda =  1;
+                }else if(HCL_H>270   && HCL_H<330){       VZ_Lambda =  1;
+                }else if(HCL_H>=330  && HCL_H<360){       VZ_Lambda = -1;
+                }else{                                  VZ_Lambda =  0;
+                }
+            //kg =WENN(B151=0;-(B153/B152);(B155*WURZEL((B152*B152)-(4*B151*B153))-B152)/(2*B151)   )
+
+            if(a==0){kg = c/b;}
+            else{
+                kg = ((VZ_Wurzel*1.0)*sqrt((b*b)-(4*a*c))-b) / (2*a);
+
+            }
+
+            //(2.4) Vektor K der parallel zu C ist aber gut gewählt zum Rechnen
+
+            if(HCL_L!=330 && HCL_L!=150){Kg = kg;}              else{Kg = 1;}
+            if(HCL_L!=330 && HCL_L!=150){Kb = 1;}               else{Kb = 0;}
+            if(HCL_L!=330 && HCL_L!=150){Kr = -1 -Kg;}          else{Kr = -1;}
+
+            K_Betrag = sqrt((Kr*Kr)+(Kg*Kg)+(Kb*Kb));
+
+
+            //lambda
+            lambda = VZ_Lambda * HCL_C  / K_Betrag;
+
+            //OUTPUT
+            Cr = lambda*Kr;
+            Cg = lambda*Kg;
+            Cb = lambda*Kb;
+
+            int llllll = 5;
+
+
+ //START HSI2HCL
+
+        }
+    }
+
+
+
+
+
+
     copy_all(Pic_I,Pic_RGB);
     // ########## Bis hierhin den eigenen Source-Code einfügen
 
