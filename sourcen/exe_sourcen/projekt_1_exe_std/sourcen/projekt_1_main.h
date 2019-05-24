@@ -280,6 +280,8 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
                 cos_alpha = 0;
             }else{
                 cos_alpha = ((rpr*cr)+(rpg*cg)+(rpb*cb))/(c*rp_betrag);
+                if(cos_alpha>1){cos_alpha=1;}
+                if(cos_alpha<-1){cos_alpha=-1;}
             }
 
 
@@ -369,8 +371,8 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
 
 
             //Prüfung ob HSI Valide
-            if(S>1 && S<1.1){ S=1; }    // Wenn S durch RUndungsfehler nicht ok
-            if(I>1 && I<1.1){ I=1; }    // Wenn I durch RUndungsfehler nicht ok
+            if(S>1 && S<1.1){ S=0.99; }    // Wenn S durch RUndungsfehler nicht ok
+            if(I>1 && I<1.1){ I=0.99; }    // Wenn I durch RUndungsfehler nicht ok
 
             if(S<0) {S=0;}
             if(I<0) {I=0;}
@@ -381,8 +383,8 @@ int main_rgb2hsi (char *fct_name, char *cmd_line)
             f_pixel(Pic_OutS,x,y) = S;
             f_pixel(Pic_OutI,x,y) = I;
 
-            if (I==0){
-                int aasdasd = 5;
+            if(x==44 && y==45){
+                int haltestelle = 123;
             }
 
         }
@@ -644,6 +646,11 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
             rgb_pixel(Pic_RGB,x,y)->r = R;
             rgb_pixel(Pic_RGB,x,y)->g = G;
             rgb_pixel(Pic_RGB,x,y)->b = B;
+
+
+            if (R<=10 && G<=10 && B<=10){
+                int aasdasd = 5;
+            }
 
  //START HCL2RGB
 
