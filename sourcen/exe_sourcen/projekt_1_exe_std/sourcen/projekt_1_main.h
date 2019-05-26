@@ -490,7 +490,8 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
             //INPUT
             HSI_H = f_pixel(Pic_H,x,y);
             HSI_S = f_pixel(Pic_S,x,y);
-            HSI_I = f_pixel(Pic_I,x,y);
+            HSI_I = f_pixel(Pic_I,x,y)/255;
+
 
 
             //(1) Arbeits HCL Trippel
@@ -648,9 +649,9 @@ int main_hsi2rgb (char *fct_name, char *cmd_line)
             rgb_pixel(Pic_RGB,x,y)->b = B;
 
 
-            if (R<=10 && G<=10 && B<=10){
-                int aasdasd = 5;
-            }
+
+            int aasdasd = 5;
+
 
  //START HCL2RGB
 
