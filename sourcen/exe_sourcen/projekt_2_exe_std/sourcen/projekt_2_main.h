@@ -14,7 +14,7 @@ int main_max_min (char *fct_name, char *cmd_line)
     PIC sPic_Out0,*Pic_Out0=&sPic_Out0;
 
     int x, y, x_size, y_size;
-    int minGrauwert,i,j = 0;
+    int minGrauwert,maxGrauwert,i,j = 0;
 
 
 
@@ -90,36 +90,45 @@ int main_max_min (char *fct_name, char *cmd_line)
 
 
     // Source Code für einen Algorithmus bei max / Dilatation
-    if(strcmp(Berechnung,"max")==0)
-    {
+    // ####### START Dilatation ###############################
+    if(strcmp(Berechnung,"max")==0){
 
-        //Alles auf Weiß setzten
-        //eingangsbild schwarz weiß
-        for (y=0; y<Pic_In0->maxrow; y++)
-        {
-            for (x=0; x<Pic_In0->maxcol; x++)
-            {
-                b_pixel(Pic_Out0,x,y)=0;
+       SendLog("Berechne max",FALSE);
+
+             // "rand" der Maske in x und y richtung
+             int start_y = y_size/2;
+             int start_x = x_size/2;
+
+
+             //innerer Rahmen (abzügliche maskenrand)
+             for (y=start_y; y<(Pic_In0->maxrow-start_y); y++){
+
+                   //innerer Rahmen (abzügliche maskenrand)
+                   for (x=start_x; x<(Pic_In0->maxcol-start_x); x++){
+
+                            maxGrauwert=0;
+
+                            //Geringsten Grauswert in Maske suchen z.B. in 3x3
+                            for(i=(x-start_x); i<(x+start_x);i++){
+
+                                for(j=(y-start_y); j<(y+start_y);j++){
+
+                                    //Geringsten Grauswert in Maske speichern
+                                    if((b_pixel(Pic_In0,i,j))> maxGrauwert){
+                                        maxGrauwert = ((b_pixel(Pic_In0,i,j)));
+                                    }
+
+                                }
+                            }
+                        // geringsten ermittelten Frauwert setzen
+                        b_pixel(Pic_Out0,x,y)=(maxGrauwert);
+                    }
             }
-        }
-
-
-        SendLog("Berechne max",FALSE);
-        for (y=0; y<Pic_In0->maxrow; y++)
-        {
-            for (x=0; x<Pic_In0->maxcol; x++)
-            {
-                if(b_pixel(Pic_In0,x,y)<schwelle){
-
-                }
-
-
-            }
-        }
     }
 
 
     // Source Code für einen Algorithmus bei min / Erosion
+    // ####### START Erosion ###############################
         if(strcmp(Berechnung,"min")==0){
 
            SendLog("Berechne min",FALSE);
@@ -182,6 +191,8 @@ int main_vergleich (char *fct_name, char *cmd_line)
 
     int x,y;
 
+    int pixel0,pixel1,pixelSub;
+
     int schwelle;
     BYTE_IBV byte_schwelle;
 
@@ -237,11 +248,20 @@ int main_vergleich (char *fct_name, char *cmd_line)
     {
         for (x=0; x<Pic_In0->maxcol; x++)
         {
-            b_pixel(Pic_Out0,x,y)=byte_schwelle;
+            pixel0=b_pixel(Pic_In0,x,y);
+            pixel1=b_pixel(Pic_In1,x,y);
 
+            pixelSub=fabs(pixel1-pixel0);
+
+            if(pixelSub<byte_schwelle){
+                pixelSub=0;
+            }
+            else if(pixelSub>= byte_schwelle){
+                pixelSub=255;
+            }
+            b_pixel(Pic_Out0,x,y)=pixelSub;
         }
     }
-
 
     //Dateipfade für Ausgabebilder besorgen und Bilder abspeichern
     GetOutputImagePath(cmd_line, fct_name, 0,ImgPathBuffer);
