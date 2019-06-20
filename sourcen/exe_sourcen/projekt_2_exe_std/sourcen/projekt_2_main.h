@@ -14,6 +14,7 @@ int main_max_min (char *fct_name, char *cmd_line)
     PIC sPic_Out0,*Pic_Out0=&sPic_Out0;
 
     int x, y, x_size, y_size;
+    int start_x,start_y;
     int minGrauwert,maxGrauwert,i,j = 0;
 
 
@@ -164,6 +165,48 @@ int main_max_min (char *fct_name, char *cmd_line)
                 }
         }
 
+
+        // Source Code für einen Algorithmus bei min / Erosion
+        // ####### START Erosion ###############################
+            if(strcmp(Berechnung,"ver")==0){
+
+               SendLog("Vergleich wird gestartet ...",FALSE);
+
+               //innerer Rahmen (abzügliche maskenrand)
+               for (y=0; y<(Pic_In0->maxrow); y++){
+
+                     //innerer Rahmen (abzügliche maskenrand)
+                     for (x=0; x<(Pic_In0->maxcol); x++){
+
+                         //vorbereiten der Masken
+                         //y maske = x,y
+                         //x maske = umgedreht
+                         start_x = 39/2;
+                         start_y = 7/2;
+
+                         //Geringsten Grauswert in Maske suchen z.B. in 3x3
+                         for(i=(x-start_x); i<(x+start_x);i++){
+
+                             for(j=(y-start_y); j<(y+start_y);j++){
+
+                                 //Geringsten Grauswert in Maske speichern
+                                 if((b_pixel(Pic_In0,i,j))<minGrauwert){
+                                     minGrauwert = ((b_pixel(Pic_In0,i,j)));
+                                 }
+
+                             }
+                         }
+
+
+
+
+
+                     }
+               }
+
+
+            }
+
     //Dateipfade für Ausgabebilder besorgen und Bilder abspeichern
     GetOutputImagePath(cmd_line, fct_name, 0,ImgPathBuffer);
     Write_Pic(ImgPathBuffer,Pic_Out0);
@@ -190,6 +233,7 @@ int main_vergleich (char *fct_name, char *cmd_line)
     PIC sPic_Out0,*Pic_Out0=&sPic_Out0;
 
     int x,y;
+    int fail=1;
 
     int pixel0,pixel1,pixelSub;
 
@@ -248,20 +292,40 @@ int main_vergleich (char *fct_name, char *cmd_line)
     {
         for (x=0; x<Pic_In0->maxcol; x++)
         {
+            //pixel bild 1 und 0 holen (x,y)
             pixel0=b_pixel(Pic_In0,x,y);
             pixel1=b_pixel(Pic_In1,x,y);
 
+            //pixel subtrahieren
             pixelSub=fabs(pixel1-pixel0);
 
+
+            //wenn über schwelle -> schwarz
             if(pixelSub<byte_schwelle){
                 pixelSub=0;
+
+                //Fehler setzen, wenn schwarzer pixel geschrieben.
+                if(x>17 && y>2 && x<(Pic_In0->maxcol-17) && y<(Pic_In0->maxrow-2) ){
+                    fail = 0;
+                }
             }
+
+            //wenn über schwelle -> weiß
             else if(pixelSub>= byte_schwelle){
                 pixelSub=255;
             }
             b_pixel(Pic_Out0,x,y)=pixelSub;
         }
     }
+
+    // Fehlerausgabe!
+    if(fail == 0){
+        SendLog("Fehlerhaftes Bild!",TRUE);
+    }else{
+        SendLog("OK!",TRUE);
+    }
+
+
 
     //Dateipfade für Ausgabebilder besorgen und Bilder abspeichern
     GetOutputImagePath(cmd_line, fct_name, 0,ImgPathBuffer);
