@@ -166,47 +166,6 @@ int main_max_min (char *fct_name, char *cmd_line)
         }
 
 
-        // Source Code für einen Algorithmus bei min / Erosion
-        // ####### START Erosion ###############################
-            if(strcmp(Berechnung,"ver")==0){
-
-               SendLog("Vergleich wird gestartet ...",FALSE);
-
-               //innerer Rahmen (abzügliche maskenrand)
-               for (y=0; y<(Pic_In0->maxrow); y++){
-
-                     //innerer Rahmen (abzügliche maskenrand)
-                     for (x=0; x<(Pic_In0->maxcol); x++){
-
-                         //vorbereiten der Masken
-                         //y maske = x,y
-                         //x maske = umgedreht
-                         start_x = 39/2;
-                         start_y = 7/2;
-
-                         //Geringsten Grauswert in Maske suchen z.B. in 3x3
-                         for(i=(x-start_x); i<(x+start_x);i++){
-
-                             for(j=(y-start_y); j<(y+start_y);j++){
-
-                                 //Geringsten Grauswert in Maske speichern
-                                 if((b_pixel(Pic_In0,i,j))<minGrauwert){
-                                     minGrauwert = ((b_pixel(Pic_In0,i,j)));
-                                 }
-
-                             }
-                         }
-
-
-
-
-
-                     }
-               }
-
-
-            }
-
     //Dateipfade für Ausgabebilder besorgen und Bilder abspeichern
     GetOutputImagePath(cmd_line, fct_name, 0,ImgPathBuffer);
     Write_Pic(ImgPathBuffer,Pic_Out0);
